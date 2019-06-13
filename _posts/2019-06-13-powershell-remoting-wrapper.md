@@ -5,7 +5,10 @@ categories: [powershell]
 tags: [powershell]
 ---
 
-# Powershell Remoting Wrapper
+This article will demonstrate how to automatically wrap a function to make it runnable in a session.
+
+Lets say we have a function that does something useful, like list 
+
 
 ``` powershell
 Function New-RemoteFunction {
