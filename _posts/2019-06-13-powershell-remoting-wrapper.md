@@ -1,6 +1,9 @@
 ---
 layout: post
 title:  "Powershell Remoting Wrapper"
+categories: [powershell]
+tags: [powershell]
+
 ---
 
 # Powershell Remoting Wrapper
