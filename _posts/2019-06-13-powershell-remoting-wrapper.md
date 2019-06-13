@@ -62,12 +62,8 @@ To achieve this, we begin with a template function that we can modify parts of.
 ``` powershell
 Function _RemoteTemplate {
     [CmdletBinding()]
-    # We need to replace this with the parameters of the wrapped function
+    # We need to replace this with the parameters of the wrapped function, in addition to parameters needed for the remoting
     {Param}
-
-    # This is a function we will create to dynamically add the remoting specific arguments to our generated functions.
-    # It's not strictly neccessary to do it this way, we could just as well add them directly to the Param block.
-    DynamicParam { Get-DynamicRemoteParams }
 
     Begin {
         # This is a function that will extract bound parameters from it's calling function (this function) and either return
@@ -90,11 +86,102 @@ Function _RemoteTemplate {
 
 ```
 
+Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
+
+This function has a cool technique, in that it looks at the function that called it, and uses the parameters that was given to it's parent function. When using this function, we have to make sure that these parameters actually exist on the calling function.
+
+``` powershell
+Function Get-DynamicRemoteSession {
+    [OutputType([Management.Automation.Runspaces.PSSession[]])]
+    Param()
+
+    # We get our calling function
+    $stack = Get-PSCallStack
+    $caller = $stack[1]
+
+    # This is a hashmap of the parameters sent into the calling function
+    $callerParams = $caller.InvocationInfo.BoundParameters
+
+    if ($callerParams["Session"]) {
+        return $callerParams["Session"]
+    } elseif ($callerParams["ComputerName"]) {
+        $sessionList = @()
+        foreach ($name in $callerParams["ComputerName"]) {
+            $cred = Get-CredParam $callerParams["Credential"]
+            $sessionList += New-PSSession -ComputerName $name @cred
+        }
+        return $sessionList
+    } else {
+        return
+    }
+}
+```
+
+Next we create the function that will clean up the PSSessions if we created them.
+
+Here we do the same thing, look at the calling function. If the calling function received the ComputerName parameter, we know we created the sessions, and we remove them.
+
+``` powershell
+Function Remove-DynamicRemoteSession {
+    Param(
+        [Management.Automation.Runspaces.PSSession[]]$Session
+    )
+
+    $stack = Get-PSCallStack
+    $caller = $stack[1]
+
+    $callerParams = $caller.InvocationInfo.BoundParameters
+
+    if ($callerParams["ComputerName"] -and $Session) {
+        $Session | Remove-PSSession
+    }
+
+}
+```
+
+Finally, we can create the function that will construct the remote version of the function we want to wrap.
+
+The object returned by Get-Command is a FunctionInfo object that contains a whole lot of useful structures that represents the function.
+
+In particular, we use the ScriptBlock.Ast (Abstract syntax tree) structure to parse out parts of the function. This is a structure that breaks up all the code into tokens so we can manipulate and parse the code.
+
 ``` powershell
 Function New-RemoteFunction {
     Param(
         [Parameter(Mandatory)][Management.Automation.FunctionInfo]$FunctionInfo,
         [Parameter()][string]$Name
     )
+    $fi = $FunctionInfo
+
+    $parameterNameList = @()
+    $parameterLines = @(
+        "[Parameter(Mandatory, ParameterSetName=`"ComputerName`")][string[]]`$ComputerName",
+        "[Parameter(ParameterSetName=`"ComputerName`")][PSCredential]`$Credential",
+        "[Parameter(Mandatory, ParameterSetName=`"Session`")][Management.Automation.Runspaces.PSSession[]]`$Session"
+    )
+    $fi.ScriptBlock.Ast.Body.ParamBlock.Parameters | % {
+        $parameterLines += $_.Extent.Text
+        $parameterNameList += $_.Name.Extent.Text
+    }
+
+
+    $paramText = $fi.ScriptBlock.Ast.FindAll({$args[0] -is [System.Management.Automation.Language.ParamBlockAst]}, $true).Extent.Text
+
+    $argumentList = ($parameterNameList | % { "$_"}) -join ", "
+
+    $templateDefinition = (Get-Item Function:\_RemoteTemplate).Definition
+
+    $def = $templateDefinition.Replace("{Param}", $paramText)
+    $def = $def.Replace("{ArgumentList}", "-ArgumentList @(" + $argumentList + ")")
+    $def = $def.Replace("{ScriptDefinition}", "(Get-Command Function:\`$FunctionInfo.Name)")
+
+
+    $newScript = [ScriptBlock]::Create($def)
+
+    if ($Name) {
+        Set-Item -Path Function:global:"$Name" -Value $newScript
+    } else {
+        Set-Item -Path Function:global:"$($FunctionInfo.Name)Remote" -Value $newScript
+    }
 }
 ```
