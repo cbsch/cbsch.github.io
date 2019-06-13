@@ -63,7 +63,7 @@ To achieve this, we begin with a template function that we can modify parts of.
 Function _RemoteTemplate {
     [CmdletBinding()]
     # We need to replace this with the parameters of the wrapped function, in addition to parameters needed for the remoting
-    {Param}
+    Param()
 
     Begin {
         # This is a function that will extract bound parameters from it's calling function (this function) and either return
@@ -71,11 +71,11 @@ Function _RemoteTemplate {
         $sessionList = Get-DynamicRemoteSession
 
         # Here we need to replace this bit with the script definition of our wrapped function
-        $scriptDefinition = {ScriptDefinition}
+        #$scriptBlock = {ScriptBlock}
 
         $sessionList | % {
             # Here we need replace {ArgumentList} with the names of the parameters we added in to the Param block at the top
-            Invoke-Command -Session $_ -ArgumentList {ArgumentList} -ScriptBlock ([ScriptBlock]::Create($scriptDefinition))
+            Invoke-Command -Session $_ -ArgumentList {ArgumentList} -ScriptBlock {ScriptBlock}
         }
     }
     End {
@@ -107,7 +107,8 @@ Function Get-DynamicRemoteSession {
     } elseif ($callerParams["ComputerName"]) {
         $sessionList = @()
         foreach ($name in $callerParams["ComputerName"]) {
-            $cred = Get-CredParam $callerParams["Credential"]
+            $cred = @{}
+            if ($callerParams["Credential"]) { $cred["Credential"] = $callerParams["Credential"]}
             $sessionList += New-PSSession -ComputerName $name @cred
         }
         return $sessionList
@@ -164,17 +165,18 @@ Function New-RemoteFunction {
         $parameterNameList += $_.Name.Extent.Text
     }
 
-
-    $paramText = $fi.ScriptBlock.Ast.FindAll({$args[0] -is [System.Management.Automation.Language.ParamBlockAst]}, $true).Extent.Text
+    $paramText = "Param(`n" + ($parameterLines -join ",`n") + "`n)"
+    #$paramText = $fi.ScriptBlock.Ast.FindAll({$args[0] -is [System.Management.Automation.Language.ParamBlockAst]}, $true).Extent.Text
 
     $argumentList = ($parameterNameList | % { "$_"}) -join ", "
 
     $templateDefinition = (Get-Item Function:\_RemoteTemplate).Definition
 
-    $def = $templateDefinition.Replace("{Param}", $paramText)
-    $def = $def.Replace("{ArgumentList}", "-ArgumentList @(" + $argumentList + ")")
-    $def = $def.Replace("{ScriptDefinition}", "(Get-Command Function:\`$FunctionInfo.Name)")
+    $def = $templateDefinition.Replace("Param()", $paramText)
+    $def = $def.Replace("{ArgumentList}", "@(" + $argumentList + ")")
+    $def = $def.Replace("{ScriptBlock}", "(Get-Command $($FunctionInfo.Name)).ScriptBlock")
 
+    $def | Out-Host
 
     $newScript = [ScriptBlock]::Create($def)
 
