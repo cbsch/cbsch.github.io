@@ -62,11 +62,13 @@ To achieve this, we begin with a template function that we can modify parts of.
 ``` powershell
 Function _RemoteTemplate {
     [CmdletBinding()]
-    # We need to replace this with the parameters of the wrapped function, in addition to parameters needed for the remoting
+    # We need to replace this with the parameters of the wrapped function, 
+    # in addition to parameters needed for the remoting
     Param()
 
     Begin {
-        # This is a function that will extract bound parameters from it's calling function (this function) and either return
+        # This is a function that will extract bound parameters 
+        # from it's calling function (this function) and either return
         # the session that was passed in, or create a new one.
         $sessionList = Get-DynamicRemoteSession
 
@@ -74,7 +76,8 @@ Function _RemoteTemplate {
         #$scriptBlock = {ScriptBlock}
 
         $sessionList | % {
-            # Here we need replace {ArgumentList} with the names of the parameters we added in to the Param block at the top
+            # Here we need replace {ArgumentList} with the names of the parameters we added 
+            # to the Param block at the top
             Invoke-Command -Session $_ -ArgumentList {ArgumentList} -ScriptBlock {ScriptBlock}
         }
     }
@@ -142,9 +145,9 @@ Function Remove-DynamicRemoteSession {
 
 Finally, we can create the function that will construct the remote version of the function we want to wrap.
 
-The object returned by Get-Command is a FunctionInfo object that contains a whole lot of useful structures that represents the function.
+We use the FunctionInfo object returned by Get-Command. This contains a whole lot of useful structures that represents the function.
 
-In particular, we use the ScriptBlock.Ast (Abstract syntax tree) structure to parse out parts of the function. This is a structure that breaks up all the code into tokens so we can manipulate and parse the code.
+In particular, we use the ScriptBlock.Ast (Abstract Syntax Tree) structure to parse out parts of the function. This is a structure that breaks up all the code into tokens so we can manipulate and parse the code.
 
 ``` powershell
 Function New-RemoteFunction {
@@ -154,30 +157,33 @@ Function New-RemoteFunction {
     )
     $fi = $FunctionInfo
 
+    # Keep a list of the names of the parameters, so we can pass them into the Invoke-Command
     $parameterNameList = @()
+
+    # Prepare the remote arguments to be added to the wrapper function
     $parameterLines = @(
         "[Parameter(Mandatory, ParameterSetName=`"ComputerName`")][string[]]`$ComputerName",
         "[Parameter(ParameterSetName=`"ComputerName`")][PSCredential]`$Credential",
         "[Parameter(Mandatory, ParameterSetName=`"Session`")][Management.Automation.Runspaces.PSSession[]]`$Session"
     )
+
+    # Loop through the parameters in the AST and simply get the strings representing
+    # the parameter names and definitions.
     $fi.ScriptBlock.Ast.Body.ParamBlock.Parameters | % {
         $parameterLines += $_.Extent.Text
         $parameterNameList += $_.Name.Extent.Text
     }
 
     $paramText = "Param(`n" + ($parameterLines -join ",`n") + "`n)"
-    #$paramText = $fi.ScriptBlock.Ast.FindAll({$args[0] -is [System.Management.Automation.Language.ParamBlockAst]}, $true).Extent.Text
-
     $argumentList = ($parameterNameList | % { "$_"}) -join ", "
 
     $templateDefinition = (Get-Item Function:\_RemoteTemplate).Definition
 
     $def = $templateDefinition.Replace("Param()", $paramText)
-    $def = $def.Replace("{ArgumentList}", "@(" + $argumentList + ")")
     $def = $def.Replace("{ScriptBlock}", "(Get-Command $($FunctionInfo.Name)).ScriptBlock")
+    $def = $def.Replace("{ArgumentList}", "@(" + $argumentList + ")")
 
-    $def | Out-Host
-
+    # This will create a ScriptBlock which can be assigned as a function with Set-Item
     $newScript = [ScriptBlock]::Create($def)
 
     if ($Name) {
