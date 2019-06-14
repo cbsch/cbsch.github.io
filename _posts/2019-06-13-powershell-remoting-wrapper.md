@@ -168,7 +168,8 @@ Function New-RemoteFunction {
     $parameterLines = @(
         "[Parameter(Mandatory, ParameterSetName=`"ComputerName`")][string[]]`$ComputerName",
         "[Parameter(ParameterSetName=`"ComputerName`")][PSCredential]`$Credential",
-        "[Parameter(Mandatory, ParameterSetName=`"Session`")][Management.Automation.Runspaces.PSSession[]]`$Session"
+        "[Parameter(Mandatory, ParameterSetName=`"Session`")] `
+        [Management.Automation.Runspaces.PSSession[]]`$Session"
     )
 
     # Loop through the parameters in the AST and get the strings representing
