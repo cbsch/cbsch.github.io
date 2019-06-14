@@ -3,6 +3,7 @@ layout: post
 title:  "Powershell Remoting Wrapper"
 categories: [powershell]
 tags: [powershell]
+author: Christopher Berg Schwanstrøm
 ---
 
 This article will demonstrate how to automatically wrap a function to make it runnable on remote computers.
