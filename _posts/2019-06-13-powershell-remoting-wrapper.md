@@ -73,9 +73,6 @@ Function _RemoteTemplate {
         # the session that was passed in, or create a new one.
         $sessionList = Get-DynamicRemoteSession
 
-        # Here we need to replace this bit with the script definition of our wrapped function
-        #$scriptBlock = {ScriptBlock}
-
         $sessionList | % {
             # Here we need replace {ArgumentList} with the names of the parameters we added 
             # to the Param block at the top
