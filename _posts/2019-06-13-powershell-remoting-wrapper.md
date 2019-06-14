@@ -58,7 +58,7 @@ New-RemoteFunction (Get-Command Get-HighestMemoryUsage)
 # We can by default create this new function with the same name with Remote tacked on at the end
 Get-HighestMemoryUsageRemote -ComputerName computername.domain.local
 ```
-## Template Function
+# Template Function
 
 We begin with a template function that we can modify parts of. This could just as well just be a string, but if we have it be a valid Powershell function we still get syntax highlighting and other editor features for it.
 
@@ -89,7 +89,7 @@ Function _RemoteTemplate {
 
 ```
 
-## Helper Functions
+# Helper Functions
 
 Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
 
@@ -143,7 +143,7 @@ Function Remove-DynamicRemoteSession {
     }
 }
 ```
-## Generator Function
+# Generator Function
 
 Finally, we can create the function that will construct the remote version of the function we want to wrap.
 
