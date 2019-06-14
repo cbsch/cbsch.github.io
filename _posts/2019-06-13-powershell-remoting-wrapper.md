@@ -6,6 +6,7 @@ tags: [powershell]
 author: Christopher Berg Schwanstrøm
 ---
 
+# Introduction
 This article will demonstrate how to automatically wrap a function to make it runnable on remote computers.
 
 Lets say we have a function that does something useful, like listing the top N processes with the highest memory consumption. Lets say we want to run this on remote computers.
