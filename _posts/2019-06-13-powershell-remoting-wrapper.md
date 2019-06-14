@@ -56,8 +56,9 @@ New-RemoteFunction (Get-Command Get-HighestMemoryUsage)
 # We can by default create this new function with the same name with Remote tacked on at the end
 Get-HighestMemoryUsageRemote -ComputerName computername.domain.local
 ```
+## Template Function
 
-To achieve this, we begin with a template function that we can modify parts of.
+We begin with a template function that we can modify parts of. This could just as well just be a string, but if we have it be a valid Powershell function we still get syntax highlighting and other editor features for it.
 
 ``` powershell
 Function _RemoteTemplate {
@@ -88,6 +89,8 @@ Function _RemoteTemplate {
 }
 
 ```
+
+## Helper Functions
 
 Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
 
@@ -142,6 +145,7 @@ Function Remove-DynamicRemoteSession {
 
 }
 ```
+## Generator Function
 
 Finally, we can create the function that will construct the remote version of the function we want to wrap.
 
@@ -160,14 +164,14 @@ Function New-RemoteFunction {
     # Keep a list of the names of the parameters, so we can pass them into the Invoke-Command
     $parameterNameList = @()
 
-    # Prepare the remote arguments to be added to the wrapper function
+    # Prepare the remoting parameters to be added to the wrapper function
     $parameterLines = @(
         "[Parameter(Mandatory, ParameterSetName=`"ComputerName`")][string[]]`$ComputerName",
         "[Parameter(ParameterSetName=`"ComputerName`")][PSCredential]`$Credential",
         "[Parameter(Mandatory, ParameterSetName=`"Session`")][Management.Automation.Runspaces.PSSession[]]`$Session"
     )
 
-    # Loop through the parameters in the AST and simply get the strings representing
+    # Loop through the parameters in the AST and get the strings representing
     # the parameter names and definitions.
     $fi.ScriptBlock.Ast.Body.ParamBlock.Parameters | % {
         $parameterLines += $_.Extent.Text
@@ -177,13 +181,13 @@ Function New-RemoteFunction {
     $paramText = "Param(`n" + ($parameterLines -join ",`n") + "`n)"
     $argumentList = ($parameterNameList | % { "$_"}) -join ", "
 
-    $templateDefinition = (Get-Item Function:\_RemoteTemplate).Definition
-
-    $def = $templateDefinition.Replace("Param()", $paramText)
+    # Get the text of our template function and replace the placeholders
+    $def = (Get-Item Function:\_RemoteTemplate).Definition
+    $def = $def.Replace("Param()", $paramText)
     $def = $def.Replace("{ScriptBlock}", "(Get-Command $($FunctionInfo.Name)).ScriptBlock")
     $def = $def.Replace("{ArgumentList}", "@(" + $argumentList + ")")
 
-    # This will create a ScriptBlock which can be assigned as a function with Set-Item
+    # Create a ScriptBlock which can be assigned as a function with Set-Item
     $newScript = [ScriptBlock]::Create($def)
 
     if ($Name) {
