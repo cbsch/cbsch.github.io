@@ -6,7 +6,8 @@ tags: [powershell]
 author: Christopher Berg Schwanstrøm
 ---
 
-# Introduction
+## Introduction
+
 This article will demonstrate how to automatically wrap a function to make it runnable on remote computers.
 
 Lets say we have a function that does something useful, like listing the top N processes with the highest memory consumption. Lets say we want to run this on remote computers.
@@ -53,19 +54,20 @@ The result we want to end up with is something like this
 
 ``` powershell
 # We want this function to add a new function to the global scope with remoting capabilities
-New-RemoteFunction (Get-Command Get-HighestMemoryUsage)
+Set-Item -Path Function:global:Get-HighestMemoryUsageRemote -Value (New-RemoteFunction (Get-Command Get-HighestMemoryUsage))
 
 # We can by default create this new function with the same name with Remote tacked on at the end
 Get-HighestMemoryUsageRemote -ComputerName computername.domain.local
 ```
-# Template Function
+
+## Template Function
 
 We begin with a template function that we can modify parts of. This could just as well just be a string, but if we have it be a valid Powershell function we still get syntax highlighting and other editor features for it.
 
 ``` powershell
 Function _RemoteTemplate {
     [CmdletBinding()]
-    # We need to replace this with the parameters of the wrapped function, 
+    # We need to replace this with the parameters of the wrapped function,
     # in addition to parameters needed for the remoting
     Param()
 
@@ -76,7 +78,7 @@ Function _RemoteTemplate {
         $sessionList = Get-DynamicRemoteSession
 
         $sessionList | % {
-            # Here we need replace {ArgumentList} with the names of the parameters we added 
+            # Here we need replace {ArgumentList} with the names of the parameters we added
             # to the Param block at the top
             Invoke-Command -Session $_ -ArgumentList {ArgumentList} -ScriptBlock {ScriptBlock}
         }
@@ -89,7 +91,7 @@ Function _RemoteTemplate {
 
 ```
 
-# Helper Functions
+## Helper Functions
 
 Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
 
@@ -143,7 +145,8 @@ Function Remove-DynamicRemoteSession {
     }
 }
 ```
-# Generator Function
+
+## Generator Function
 
 Finally, we can create the function that will construct the remote version of the function we want to wrap.
 
@@ -154,8 +157,7 @@ In particular, we use the ScriptBlock.Ast (Abstract Syntax Tree) structure to pa
 ``` powershell
 Function New-RemoteFunction {
     Param(
-        [Parameter(Mandatory)][Management.Automation.FunctionInfo]$FunctionInfo,
-        [Parameter()][string]$Name
+        [Parameter(Mandatory)][Management.Automation.FunctionInfo]$FunctionInfo
     )
     $fi = $FunctionInfo
 
@@ -185,13 +187,7 @@ Function New-RemoteFunction {
     $def = $def.Replace("{ScriptBlock}", "(Get-Command $($FunctionInfo.Name)).ScriptBlock")
     $def = $def.Replace("{ArgumentList}", "@(" + $argumentList + ")")
 
-    # Create a ScriptBlock which can be assigned as a function with Set-Item
-    $newScript = [ScriptBlock]::Create($def)
-
-    if ($Name) {
-        Set-Item -Path Function:global:"$Name" -Value $newScript
-    } else {
-        Set-Item -Path Function:global:"$($FunctionInfo.Name)Remote" -Value $newScript
-    }
+    # Create the ScriptBlock and return it
+    return [ScriptBlock]::Create($def)
 }
 ```
