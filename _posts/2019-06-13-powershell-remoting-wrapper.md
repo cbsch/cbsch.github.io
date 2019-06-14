@@ -142,7 +142,6 @@ Function Remove-DynamicRemoteSession {
     if ($callerParams["ComputerName"] -and $Session) {
         $Session | Remove-PSSession
     }
-
 }
 ```
 ## Generator Function
