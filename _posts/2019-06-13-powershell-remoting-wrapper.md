@@ -12,7 +12,7 @@ Lets say we have a function that does something useful, like listing the top N p
 ``` powershell
 Function Get-HighestMemoryUsage {
     Param(
-        [Parameter(Mandatory)][int]$Top = 5
+        [Parameter()][int]$Top = 5
     )
 
     Get-WmiObject Win32_PerfRawData_PerfProc_Process |
@@ -27,7 +27,7 @@ In order to do this, we could extend the function with parameters taking in eith
 ``` powershell
 Function Get-HighestMemoryUsage {
     Param(
-        [Parameter(Mandatory)][int]$Top = 5,
+        [Parameter()][int]$Top = 5,
         [Parameter(Mandatory)][string]$ComputerName
     )
 
