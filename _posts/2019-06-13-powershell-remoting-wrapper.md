@@ -2,7 +2,7 @@
 layout: post
 title:  "Powershell Remoting Wrapper"
 categories: [powershell]
-tags: [powershell]
+tags: [powershell, metaprogramming]
 author: Christopher Berg Schwanstrøm
 ---
 
