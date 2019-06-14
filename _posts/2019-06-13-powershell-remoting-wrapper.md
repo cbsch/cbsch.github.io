@@ -73,7 +73,7 @@ Function _RemoteTemplate {
 
     Begin {
         # This is a function that will extract bound parameters 
-        # from it's calling function (this function) and either return
+        # from its calling function (this function) and either return
         # the session that was passed in, or create a new one.
         $sessionList = Get-DynamicRemoteSession
 
@@ -95,7 +95,7 @@ Function _RemoteTemplate {
 
 Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
 
-This function has a cool technique, in that it looks at the function that called it, and uses the parameters that was given to it's parent function. When using this function, we have to make sure that these parameters actually exist on the calling function.
+This function has a cool technique, in that it looks at the function that called it, and uses the parameters that was given to its parent function. When using this function, we have to make sure that these parameters actually exist on the calling function.
 
 ``` powershell
 Function Get-DynamicRemoteSession {
