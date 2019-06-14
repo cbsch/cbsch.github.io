@@ -54,7 +54,8 @@ The result we want to end up with is something like this
 
 ``` powershell
 # We want this function to add a new function to the global scope with remoting capabilities
-Set-Item -Path Function:global:Get-HighestMemoryUsageRemote -Value (New-RemoteFunction (Get-Command Get-HighestMemoryUsage))
+Set-Item -Path Function:global:Get-HighestMemoryUsageRemote -Value (
+    New-RemoteFunction (Get-Command Get-HighestMemoryUsage))
 
 # We can by default create this new function with the same name with Remote tacked on at the end
 Get-HighestMemoryUsageRemote -ComputerName computername.domain.local
