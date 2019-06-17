@@ -175,9 +175,11 @@ Function New-RemoteFunction {
 
     # Loop through the parameters in the AST and get the strings representing
     # the parameter names and definitions.
-    $fi.ScriptBlock.Ast.Body.ParamBlock.Parameters | % {
-        $parameterLines += $_.Extent.Text
-        $parameterNameList += $_.Name.Extent.Text
+    if ($fi.ScriptBlock.Ast.Body.ParamBlock.Parameters) {
+        $fi.ScriptBlock.Ast.Body.ParamBlock.Parameters | % {
+            $parameterLines += $_.Extent.Text
+            $parameterNameList += $_.Name.Extent.Text
+        }
     }
 
     $paramText = "Param(`n" + ($parameterLines -join ",`n") + "`n)"
