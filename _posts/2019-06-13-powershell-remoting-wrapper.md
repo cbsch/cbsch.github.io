@@ -94,9 +94,9 @@ Function _RemoteTemplate {
 
 ## Helper Functions
 
-Before we create the function itself, this template functions has a few dependencies on other functions. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
+Before we create the main function itself, we need to create a few functions the template depends on. This is so we can avoid making the template huge, and also some of these functions can be useful elsewhere. First we create the function that will get or create a new session.
 
-This function has a cool technique, in that it looks at the function that called it, and uses the parameters that was given to its parent function. When using this function, we have to make sure that these parameters actually exist on the calling function.
+This function uses a cool technique, in that it looks at the function that called it, and uses the parameters that was given to its parent function. When using this function, we have to make sure that these parameters actually exist on the calling function.
 
 ``` powershell
 Function Get-DynamicRemoteSession {
