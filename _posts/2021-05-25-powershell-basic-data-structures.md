@@ -1,5 +1,4 @@
 ---
-# layout: post
 title:  "Powershell basic data structures"
 categories: [powershell]
 tags: [powershell]

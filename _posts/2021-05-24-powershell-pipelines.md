@@ -1,5 +1,4 @@
 ---
-# layout: post
 title:  "Powershell Pipelines"
 categories: [powershell]
 tags: [powershell]
