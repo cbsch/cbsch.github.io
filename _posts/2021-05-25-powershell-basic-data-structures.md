@@ -63,23 +63,14 @@ $object = @{
 JSON equivalent
 ```json
 {
-  "list": [
-    1,
-    2,
-    3,
-    4,
-    5
-  ],
-  "objects": [
-    {
-      "name": "Test1",
-      "value": 1
-    },
-    {
-      "name": "Test2",
-      "value": 2
-    }
-  ]
+  "list": [1, 2, 3, 4, 5],
+  "objects": [{
+    "name": "Test1",
+    "value": 1
+  }, {
+    "name": "Test2",
+    "value": 2
+  }]
 }
 ```
 
