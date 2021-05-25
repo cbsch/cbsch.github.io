@@ -80,5 +80,5 @@ This applies to most cmdlets, but there may be exceptions. Some cmdlets will by 
     % { Write-Host "Pipeline 1 processing $_"; $_ } |
     % { Write-Host "Pipeline 2 processing $_"; $_ } |
     Group-Object | # Group-Object will create new objects with the properties Name, Count and Group
-    % { Write-Host "Pipeline 4 processing $($_.Name)"}
+    % { Write-Host "Pipeline 3 processing $($_.Name)"}
 ```
