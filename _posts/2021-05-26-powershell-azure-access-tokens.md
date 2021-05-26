@@ -35,7 +35,7 @@ PartnerCenter: `https://api.partnercenter.microsoft.com`
 
 ## Practical usage
 
-```Powershell
+```powershell
 Function Get-AzureAccessToken {
     Param(
         [Parameter(Mandatory)][string]$TenantId,
