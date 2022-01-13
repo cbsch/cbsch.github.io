@@ -9,7 +9,7 @@ author: Christopher Berg Schwanstrøm
 
 ## Prerequisites
 
-To start off we need a Linux computer on your network set up with SSH keys. On Windows it's also possible to use WSL
+To start off we need a Linux computer on your network set up with SSH keys. It's also possible to use Windows with WSL.
 
 ## Setup on the Synology
 
